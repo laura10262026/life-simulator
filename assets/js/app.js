@@ -543,9 +543,10 @@ function showEvent(event) {
 function resolveEvent(event, choice) {
   applyToStats(state.stats, choice.effects);
   if (choice.effects.money) recordMoneyChange(choice.effects.money, `${event.title} · ${choice.label}`);
+  // Remove the resolved event before special handlers prepend new scenes.
+  state.pendingScenes.shift();
   applySpecialChoice(choice.special);
   addMemory(`${event.icon} ${event.title}：${choice.result}`, getStage(Math.max(0, state.turn - 1)).label, "#ffbc63");
-  state.pendingScenes.shift();
   const followUps = choice.followUps ?? (choice.followUp ? [choice.followUp] : []);
   if (followUps.length) state.pendingScenes.unshift(...followUps);
   const thresholdScene = detectThresholdScene();
