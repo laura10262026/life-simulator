@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#171713">
   <title>十三岁以后｜人生模拟器</title>
   <meta name="description" content="《十三岁以后》是一款从初中开始的中文人生模拟器。随机家庭背景，在学业、友情、健康、金钱与人生路线之间做出选择。">
-  <link rel="stylesheet" href="assets/css/styles.css?v=0.16.0">
+  <link rel="stylesheet" href="assets/css/styles.css?v=0.17.0">
 </head>
 <body>
   <main id="setupScreen" class="setup-screen">
@@ -94,6 +94,11 @@
           </div>
           <div id="actionGrid" class="action-grid"></div>
         </section>
+        <section class="friend-panel panel" aria-labelledby="friendPanelTitle">
+          <div class="section-heading"><div><p class="eyebrow">PEOPLE IN YOUR LIFE</p><h2 id="friendPanelTitle">一路同行的人</h2></div></div>
+          <p id="friendPanelHint" class="muted"></p>
+          <div id="friendList" class="friend-list"></div>
+        </section>
       </section>
 
       <aside class="memory-panel panel">
@@ -121,7 +126,7 @@
   </section>
 
   <section class="save-transfer" aria-label="存档管理">
-    <strong>存档管理 · v0.16.0</strong>
+    <strong>存档管理 · v0.17.0</strong>
     <div class="save-transfer-actions">
       <button id="exportSaveButton" class="button ghost" type="button">导出存档</button>
       <button id="importSaveButton" class="button ghost" type="button">导入存档</button>
@@ -130,8 +135,9 @@
     <input id="importSaveFile" type="file" accept=".json,application/json" hidden>
     <p id="transferStatus" role="status" aria-live="polite">存档只保存在当前浏览器。导出 JSON 后可在另一台设备导入；不是云同步。导入前请先备份，只使用可信文件。</p>
   </section>
-  <script src="assets/js/save-transfer.js?v=0.16.0"></script>
-  <script src="assets/js/app.js?v=0.16.0"></script>
-  <script src="assets/js/save-ui.js?v=0.16.0"></script>
+  <script src="assets/js/save-transfer.js?v=0.17.0"></script>
+  <script src="assets/js/friend-stories.js?v=0.17.0"></script>
+  <script src="assets/js/app.js?v=0.17.0"></script>
+  <script src="assets/js/save-ui.js?v=0.17.0"></script>
 </body>
 </html>

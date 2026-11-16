@@ -441,7 +441,7 @@ function generateOrigin(identityChoice) {
 
 function startLife() {
   state = {
-    version: 16,
+    version: 17,
     character: pendingOrigin,
     stats: { ...pendingOrigin.stats },
     turn: 0,
@@ -480,6 +480,7 @@ function takeAction(action) {
   addMemory(`${action.icon} ${action.name}：${action.note}。`, stageBeforeAdvance.label, action.color);
   state.turn += 1;
   const scenes = [createActionScene(action)];
+  scenes.push(...updateFriendStories());
   if (careerFinanceScene) scenes.push(careerFinanceScene);
   scenes.push(...skillScenes);
   scenes.push(...relationshipScenes);
@@ -700,6 +701,7 @@ function renderGame() {
   });
   document.querySelector("#memoryList").replaceChildren(...memoryElements);
   document.querySelector("#saveStatus").textContent = "已自动保存";
+  renderFriendPanel();
 }
 
 function getRiskLabel() {
@@ -975,14 +977,14 @@ function updateSkillProgress(action) {
   return scenes;
 }
 
-function normalizeFriend(friend) {
-  return {
+function normalizeFriend(friend, turn = 0) {
+  return normalizeFriendStory({
     mood: 58,
     health: 62,
     pressure: 35,
     monthsSinceContact: 0,
     ...friend
-  };
+  }, turn);
 }
 
 function normalizeColleague(colleague) {
@@ -1001,7 +1003,7 @@ function normalizeRelationshipState() {
   state.relationships.parentHealth ??= randomBetween(62, 82);
   state.relationships.lastFamilyContact ??= 0;
   state.relationships.supportMonths ??= 0;
-  state.friends = (state.friends ?? []).map(normalizeFriend);
+  state.friends = (state.friends ?? []).map(friend => normalizeFriend(friend, state.turn));
   if (state.career) state.career.colleagues = (state.career.colleagues ?? []).map(normalizeColleague);
 }
 
@@ -1045,8 +1047,8 @@ function updateRelationshipNetwork(action) {
       friend.mood = clampValue(friend.mood - 1);
     }
   });
-  if (action.id === "friends" && state.friends.length) {
-    const friend = [...state.friends].sort((a, b) => (a.mood - a.pressure) - (b.mood - b.pressure))[0];
+  if ((action.id === "friends" || (action.id === "network" && getPreferredFriend())) && state.friends.length) {
+    const friend = getPreferredFriend() ?? [...state.friends].sort((a, b) => (a.mood - a.pressure) - (b.mood - b.pressure))[0];
     friend.monthsSinceContact = 0;
     friend.mood = clampValue(friend.mood + 5);
     friend.pressure = clampValue(friend.pressure - 5);
@@ -1522,7 +1524,7 @@ function normalizeSavedGame(saved) {
       saved.memories = saved.memories.map((memory) => memory.text === previousStory ? { ...memory, text: saved.character.story } : memory);
     }
     const previousVersion = saved.version ?? 1;
-    saved.version = 16;
+    saved.version = 17;
     saved.goals ??= [];
     saved.lifeStats ??= { propertiesOwned: 0, careerLevel: 0, familySupport: 0, primarySkill: 0 };
     saved.relationships ??= createRelationshipState();
@@ -1559,7 +1561,7 @@ function normalizeSavedGame(saved) {
       };
     }
     saved.friends ??= [];
-    saved.friends = saved.friends.map(normalizeFriend);
+    saved.friends = saved.friends.map(friend => normalizeFriend(friend, saved.turn));
     saved.projects ??= [];
     saved.projects = saved.projects.map((project) => ({ phase: 1, quality: 0, status: "active", notes: [], ...project }));
     saved.economy ??= { savingsGoal: null, ledger: [] };
@@ -1761,7 +1763,7 @@ function createActionScene(action) {
 }
 
 function createUniversityFriendshipScene() {
-  const existing = state.friends.length ? pick(state.friends) : null;
+  const existing = getPreferredFriend() ?? (state.friends.length ? pick(state.friends) : null);
   if (existing) {
     return {
       id: createId(), icon: "🧑‍🤝‍🧑", title: `和${existing.name}的大学周末`,
@@ -2631,7 +2633,7 @@ function createGoalPurchaseScene(goal) {
 }
 
 function createFriendshipScene() {
-  if (!state.friends.length || Math.random() < 0.5) {
+  if (!state.friends.length || (!getPreferredFriend() && Math.random() < 0.5)) {
     const friend = generateFriend();
     return {
       id: createId(), icon: "🫂", title: `认识${friend.name}`,
@@ -2643,7 +2645,7 @@ function createFriendshipScene() {
     };
   }
 
-  const friend = pick(state.friends);
+  const friend = getPreferredFriend() ?? pick(state.friends);
   return {
     id: createId(), icon: "💬", title: `${friend.name}发来的消息`,
     story: `${friend.name}最近状态不太好，放学后发来一句“能不能聊聊”。你原本还有自己的安排。`,
@@ -2681,6 +2683,7 @@ function generateFriend() {
     name,
     identity,
     trait: pick(["说话很慢但很细心", "看起来外向，其实很怕被忽略", "成绩普通，却特别讲义气", "喜欢画画，总在课本边角涂鸦", "不太爱说话，但记得别人随口提过的事"]),
+    storyKind: FRIEND_STORY_KINDS[state.friends.length % 3],
     closeness: 20,
     mood: randomBetween(45, 70),
     health: randomBetween(48, 72),
@@ -2944,7 +2947,8 @@ function createCollegeGraduationScene() {
 
 function applySpecialChoice(special) {
   if (!special) return;
-  if (special.type === "addFriend" && !state.friends.some((friend) => friend.id === special.friend.id)) state.friends.push(normalizeFriend(special.friend));
+  if (special.type === "friendChapter") { applyFriendChapter(special); return; }
+  if (special.type === "addFriend" && !state.friends.some((friend) => friend.id === special.friend.id)) state.friends.push(normalizeFriend(special.friend, state.turn));
   if (special.type === "adjustFriend") {
     const friend = state.friends.find((item) => item.id === special.friendId);
     if (friend) {

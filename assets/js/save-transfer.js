@@ -15,7 +15,7 @@ const SaveTransfer = (() => {
     walk(data);
     const object = value => value !== null && typeof value === "object" && !Array.isArray(value);
     if (!object(data) || !object(data.character) || !object(data.stats) || !Array.isArray(data.memories)) throw new Error("这不是有效的人生模拟器存档。");
-    if (data.version != null && (!Number.isInteger(data.version) || data.version < 1 || data.version > 16)) throw new Error("此存档版本暂不支持，请使用对应或更新版本的游戏。");
+    if (data.version != null && (!Number.isInteger(data.version) || data.version < 1 || data.version > 17)) throw new Error("此存档版本暂不支持，请使用对应或更新版本的游戏。");
     if (!Number.isSafeInteger(data.turn) || data.turn < 0 || data.turn > 100000) throw new Error("存档月份无效。");
     for (const key of ["name", "city", "parent", "school", "personality"]) if (typeof data.character[key] !== "string" || !data.character[key].trim()) throw new Error("人物资料不完整。");
     if (!object(data.character.family) || !object(data.character.talent)) throw new Error("家庭或天赋资料不完整。");
@@ -26,6 +26,11 @@ const SaveTransfer = (() => {
     }
     for (const key of ["friends", "projects", "goals", "pendingScenes"]) if (data[key] != null && (!Array.isArray(data[key]) || !data[key].every(object))) throw new Error("存档列表结构无效。");
     for (const key of ["education", "economy", "investments", "career", "balance", "relationships", "risks", "skills", "lifeStats"]) if (data[key] != null && !object(data[key])) throw new Error("存档状态结构无效。");
+    for (const friend of data.friends ?? []) {
+      if (typeof friend.id !== "string" || typeof friend.name !== "string") throw new Error("朋友资料不完整。");
+      if (friend.story != null && (!object(friend.story) || !["dream", "responsibility", "distance"].includes(friend.story.kind) || !Number.isInteger(friend.story.chapter) || friend.story.chapter < 0 || friend.story.chapter > 3 || !Array.isArray(friend.story.choices) || !Number.isFinite(friend.story.dueTurn))) throw new Error("朋友故事进度无效。");
+      if (friend.sharedMoments != null && (!Array.isArray(friend.sharedMoments) || !friend.sharedMoments.every(moment => object(moment) && typeof moment.text === "string" && Number.isFinite(moment.turn)))) throw new Error("共同经历无效。");
+    }
     if (!data.memories.every(item => object(item) && typeof item.text === "string" && typeof item.stage === "string")) throw new Error("人生记录不完整。");
     function scene(item) {
       if (!object(item) || typeof item.title !== "string" || !Array.isArray(item.choices) || !item.choices.length) throw new Error("待处理剧情不完整。");

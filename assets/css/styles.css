@@ -333,3 +333,15 @@ h1, h2, p { margin-top: 0; }
 .save-transfer .button { min-height: 44px; padding: 10px 14px; font-size: 13px; }
 .save-transfer p { overflow-wrap: anywhere; line-height: 1.6; }
 @media (max-width: 600px) { .save-transfer { margin: 10px; padding: 10px; } }
+
+.friend-panel { padding: 20px; }
+.friend-panel h2 { font-size: 19px; }
+#friendPanelHint { font-size: 12px; line-height: 1.7; }
+.friend-list { display: grid; gap: 10px; min-width: 0; }
+.friend-card { border: 1px solid var(--line, #d6d5cc); border-radius: 12px; padding: 12px; min-width: 0; overflow-wrap: anywhere; }
+.friend-card summary { cursor: pointer; font-size: 13px; font-weight: 700; line-height: 1.8; min-height: 44px; }
+.friend-card p, .friend-card li { font-size: 12px; line-height: 1.8; }
+.friend-card ul { padding-left: 20px; }
+.friend-card .button { min-height: 44px; padding: 10px 14px; font-size: 12px; max-width: 100%; }
+.friend-story-progress { font-weight: 700; }
+@media (max-width: 600px) { .friend-panel { padding: 14px; } .friend-card { padding: 10px; } }
